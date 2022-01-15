@@ -147,7 +147,7 @@ func Do(req *http.Request, count int) ([]byte, error) {
 	}
 }
 
-func (this *Client)httpGet(reqURL string) ([]byte, error) {
+func (this *Client)httpGet(reqURL string) (b []byte, err error) {
 	var req *http.Request = nil
 	if req, err = http.NewRequest(http.MethodGet, reqURL, nil); err != nil {
 		return nil, err
