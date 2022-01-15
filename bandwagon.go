@@ -16,7 +16,6 @@ const (
 )
 
 type Client struct {
-	NewClient func() *http.Client
 	creds     Credentials
 }
 
@@ -48,7 +47,6 @@ func createHttpClient() *http.Client {
 
 func NewClient(cred Credentials) *Client {
 	return &Client{
-		NewClient: makeClient,
 		creds:     cred,
 	}
 }
@@ -101,7 +99,7 @@ type InfoVPS struct {
 }
 
 func (info *InfoVPS)String() string {
-	return fmt.Sprintf("IP Address: %v, Bandwidth Usage: %v GB, Reset time: %v", info.Ipv4(), info.DataCounter/1024/1024/1024, info.ResetTime())
+	return fmt.Sprintf("IP Address: %v,\tBandwidth Usage: %v GB,\tReset time: %v", info.Ipv4(), info.DataCounter/1024/1024/1024, info.ResetTime())
 }
 
 func (this *InfoVPS) ResetTime() string {
