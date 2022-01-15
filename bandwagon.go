@@ -106,6 +106,29 @@ func (info *InfoVPS)String() string {
 	return fmt.Sprintf("IP Address: %v, Bandwidth Usage: %v GB, Reset time: %v", info.Ipv4(), info.DataCounter/1024/1024/1024, info.ResetTime())
 }
 
+func (this *InfoVPS) ResetTime() string {
+	tn := time.Unix(this.DataNextReset, 0)
+	return tn.Format("2006-01-02 15:04:05")
+}
+
+func (this *InfoVPS) Ipv4() string {
+	if this.IpAddresses == nil || len(this.IpAddresses) <= 0 {
+		return ""
+	}
+	return fmt.Sprintf("%v", this.IpAddresses[0])
+}
+
+func (this *Client) get(req *http.Request, ctx context.Context) (buf []byte, err error) {
+	client := makeClient()
+	r, err := client.Do(req.WithContext(ctx))
+	if err != nil {
+		return
+	}
+
+	defer r.Body.Close()
+	return ioutil.ReadAll(r.Body)
+}
+
 func (this *Client) do(req *http.Request, count int) ([]byte, error) {
 	msgQ := make(chan string)
 	ctx := context.Background()
@@ -128,35 +151,11 @@ func (this *Client) do(req *http.Request, count int) ([]byte, error) {
 	}
 }
 
-func (this *Client) get(req *http.Request, ctx context.Context) (buf []byte, err error) {
-	client := makeClient()
-	r, err := client.Do(req.WithContext(ctx))
-	if err != nil {
-		return
-	}
-
-	defer r.Body.Close()
-	return ioutil.ReadAll(r.Body)
-}
-
-func (this *InfoVPS) ResetTime() string {
-	tn := time.Unix(this.DataNextReset, 0)
-	return tn.Format("2006-01-02 15:04:05")
-}
-
-func (this *InfoVPS) Ipv4() string {
-	if this.IpAddresses == nil || len(this.IpAddresses) <= 0 {
-		return ""
-	}
-	return fmt.Sprintf("%v", this.IpAddresses[0])
-}
-
 func (this *Client) Do(req *http.Request) (b []byte, err error) {
 	return this.do(req, 20)
 }
 
-func (this *Client) Info() (info *InfoVPS, err error) {
-	reqURL := fmt.Sprintf("%v/v1/getServiceInfo?%v", defaultBaseURL, this.creds.Values())
+func (this *Client)httpGet(reqURL string) (res *Response, err error) {
 	var req *http.Request = nil
 	if req, err = http.NewRequest(http.MethodGet, reqURL, nil); err != nil {
 		return nil, err
@@ -165,82 +164,31 @@ func (this *Client) Info() (info *InfoVPS, err error) {
 	if err != nil {
 		return nil, err
 	}
-	info = &InfoVPS{}
-	err = json.NewDecoder(bytes.NewBuffer(resp)).Decode(info)
+	res = &Response{}
+	err = json.NewDecoder(bytes.NewBuffer(resp)).Decode(res)
 	return
+}
+
+func (this *Client) Info() (info *InfoVPS, err error) {
+	return this.httpGet(fmt.Sprintf("%v/v1/getServiceInfo?%v", defaultBaseURL, this.creds.Values()))
 }
 
 func (this *Client) Start() (res *Response, err error) {
-	reqURL := fmt.Sprintf("%v/v1/start?%v", defaultBaseURL, this.creds.Values())
-	var req *http.Request = nil
-	if req, err = http.NewRequest(http.MethodGet, reqURL, nil); err != nil {
-		return nil, err
-	}
-	resp, err := this.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	res = &Response{}
-	err = json.NewDecoder(bytes.NewBuffer(resp)).Decode(res)
-	return
+	return this.httpGet(fmt.Sprintf("%v/v1/start?%v", defaultBaseURL, this.creds.Values()))
 }
 
 func (this *Client) Stop() (res *Response, err error) {
-	reqURL := fmt.Sprintf("%v/v1/stop?%v", defaultBaseURL, this.creds.Values())
-	var req *http.Request = nil
-	if req, err = http.NewRequest(http.MethodGet, reqURL, nil); err != nil {
-		return nil, err
-	}
-	resp, err := this.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	res = &Response{}
-	err = json.NewDecoder(bytes.NewBuffer(resp)).Decode(res)
-	return
+	return this.httpGet(fmt.Sprintf("%v/v1/stop?%v", defaultBaseURL, this.creds.Values()))
 }
 
 func (this *Client) Kill() (res *Response, err error) {
-	reqURL := fmt.Sprintf("%v/v1/kill?%v", defaultBaseURL, this.creds.Values())
-	var req *http.Request = nil
-	if req, err = http.NewRequest(http.MethodGet, reqURL, nil); err != nil {
-		return nil, err
-	}
-	resp, err := this.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	res = &Response{}
-	err = json.NewDecoder(bytes.NewBuffer(resp)).Decode(res)
-	return
+	return this.httpGet(fmt.Sprintf("%v/v1/kill?%v", defaultBaseURL, this.creds.Values()))
 }
 
 func (this *Client) Reboot() (res *Response, err error) {
-	reqURL := fmt.Sprintf("%v/v1/restart?%v", defaultBaseURL, this.creds.Values())
-	var req *http.Request = nil
-	if req, err = http.NewRequest(http.MethodGet, reqURL, nil); err != nil {
-		return nil, err
-	}
-	resp, err := this.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	res = &Response{}
-	err = json.NewDecoder(bytes.NewBuffer(resp)).Decode(res)
-	return
+	return this.httpGet(fmt.Sprintf("%v/v1/restart?%v", defaultBaseURL, this.creds.Values()))
 }
 
 func (this *Client) Command(command string) (res *Response, err error) {
-	reqURL := fmt.Sprintf("%v/v1/basicShell/exec?command=%v&%v", defaultBaseURL, command, this.creds.Values())
-	var req *http.Request = nil
-	if req, err = http.NewRequest(http.MethodGet, reqURL, nil); err != nil {
-		return nil, err
-	}
-	resp, err := this.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	res = &Response{}
-	err = json.NewDecoder(bytes.NewBuffer(resp)).Decode(res)
-	return
+	return this.httpGet(fmt.Sprintf("%v/v1/basicShell/exec?command=%v&%v", defaultBaseURL, command, this.creds.Values()))
 }
