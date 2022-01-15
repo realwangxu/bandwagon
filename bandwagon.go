@@ -170,7 +170,18 @@ func (this *Client)httpGet(reqURL string) (res *Response, err error) {
 }
 
 func (this *Client) Info() (info *InfoVPS, err error) {
-	return this.httpGet(fmt.Sprintf("%v/v1/getServiceInfo?%v", defaultBaseURL, this.creds.Values()))
+	reqURL := fmt.Sprintf("%v/v1/getServiceInfo?%v", defaultBaseURL, this.creds.Values())
+	var req *http.Request = nil
+	if req, err = http.NewRequest(http.MethodGet, reqURL, nil); err != nil {
+		return nil, err
+	}
+	resp, err := this.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	info = &InfoVPS{}
+	err = json.NewDecoder(bytes.NewBuffer(resp)).Decode(info)
+	return
 }
 
 func (this *Client) Start() (res *Response, err error) {
