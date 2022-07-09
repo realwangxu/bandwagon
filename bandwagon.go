@@ -99,7 +99,7 @@ type InfoVPS struct {
 }
 
 func (info *InfoVPS)String() string {
-	return fmt.Sprintf("IP Address: %v,\tBandwidth Usage: %v GB,\tReset time: %v", info.Ipv4(), info.DataCounter/1024/1024/1024, info.ResetTime())
+	return fmt.Sprintf("IP Address: %v,\tBandwidth Usage: %v/%v GB,\tReset time: %v", info.Ipv4(), info.DataCounter/1024/1024/1024, info.PlanMonthlyData/1024/1024/1024, info.ResetTime())
 }
 
 func (this *InfoVPS) ResetTime() string {
