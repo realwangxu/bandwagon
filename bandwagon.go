@@ -22,6 +22,8 @@ type Client struct {
 type Credentials struct {
 	VeID   string `json:"veid"`
 	APIKey string `json:"api_key"`
+	IPAddress string `json:"ip_address"`
+	Created string `json:"created"`
 }
 
 func (this *Credentials) Values() string {
@@ -96,10 +98,11 @@ type InfoVPS struct {
 	TotalAbusePoints                int32             `json:"total_abuse_points"`
 	MaxAbusePoints                  int32             `json:"max_abuse_points"`
 	Error                           int32             `json:"error"`
+	Created                         string            `json:"created"`
 }
 
 func (info *InfoVPS)String() string {
-	return fmt.Sprintf("IP Address: %v,\tBandwidth Usage: %v/%v GB,\tReset time: %v", info.Ipv4(), info.DataCounter/1024/1024/1024, info.PlanMonthlyData/1024/1024/1024, info.ResetTime())
+	return fmt.Sprintf("IP Address: %v,\tBandwidth Usage: %v/%v GB,\tCreated: %v\tReset time: %v", info.Ipv4(), info.DataCounter/1024/1024/1024, info.PlanMonthlyData/1024/1024/1024, info.Created, info.ResetTime())
 }
 
 func (this *InfoVPS) ResetTime() string {
@@ -170,7 +173,7 @@ func (this *Client) Info() (info *InfoVPS, err error) {
 	if err != nil {
 		return nil, err
 	}
-	info = &InfoVPS{}
+	info = &InfoVPS{Created: this.creds.Created}
 	err = json.NewDecoder(bytes.NewBuffer(resp)).Decode(info)
 	return
 }
